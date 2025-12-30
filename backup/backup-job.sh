@@ -35,11 +35,12 @@ log_info() {
 
 log_warn() {
   echo "[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1" >&2
+  gotify "$1" "Backup Job Warning" 6
 }
 
 log_err() {
   echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1" >&2
-  gotify "$1" "Backup Job Error" 8
+  gotify "$1" "Backup Job Error" 10
 }
 
 log_fatal() {
@@ -123,7 +124,7 @@ if [ -f /tmp/backup-hdd.log ]; then
     cat /tmp/backup-hdd.log
 fi
 if [ -f /tmp/backup-idrive.log ]; then
-    cat /tmp/backup-idrive.log
+    cat $(strings /tmp/backup-idrive.log)
 fi
 
 # --- Phase 3: Cleanup ---
