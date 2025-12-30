@@ -1,0 +1,8 @@
+services:
+  gotify:
+    image: gotify/server:latest
+    container_name: gotify
+    environment:
+      - TZ="Europe/Berlin"
+    volumes:
+      - /data/docker/volumes/gotify-data:/app/data

@@ -1,0 +1,423 @@
+{
+	log {
+		level INFO
+		output file /data/log {
+			roll_size 100MiB # Rotate after 100MB
+			roll_keep 7 # Keep 7 rotated files
+		}
+	}
+	crowdsec {
+		api_url http://crowdsec:8080
+		api_key {$CROWDSEC_API_KEY}
+	}
+	acme_dns cloudflare {$CLOUDFLARE_API_TOKEN}
+	admin :2019
+	servers {
+		trusted_proxies static 172.0.0.0/8
+	}
+}
+
+http://localhost {
+	respond /healthcheck 200
+}
+
+auth.korel.be.eu.org,
+auth.l.korel.be.eu.org,
+auth.ts.korel.be.eu.org {
+	log
+	route {
+		crowdsec
+		reverse_proxy authelia:9091
+	}
+}
+
+korel.be.eu.org,
+l.korel.be.eu.org,
+ts.korel.be.eu.org {
+	log
+	encode zstd gzip
+	route {
+		crowdsec
+		root * /usr/share/caddy
+		file_server {
+			index redirect.html
+		}
+	}
+}
+
+hp.l.korel.be.eu.org,
+hp.ts.korel.be.eu.org {
+	log
+	encode zstd gzip
+
+	handle /healthcheck {
+		header {
+			Access-Control-Allow-Origin https://korel.be.eu.org
+		}
+		respond "OK" 200
+	}
+
+	handle {
+		forward_auth authelia:9091 {
+			uri /api/authz/forward-auth
+			copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+		}
+
+		route {
+			crowdsec
+			reverse_proxy homepage:3000
+		}
+	}
+}
+
+st.ts.korel.be.eu.org,
+st.l.korel.be.eu.org {
+	log
+
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	reverse_proxy syncthing:8384 {
+		header_up Host {upstream_hostport}
+	}
+}
+
+fb.ts.korel.be.eu.org,
+fb.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy filebrowser:80
+	}
+}
+
+vw.korel.be.eu.org,
+vw.ts.korel.be.eu.org,
+vw.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	@iconPath {
+		path_regexp iconPath ^.*\/icon\.png$
+	}
+	header @iconPath {
+		-Cross-Origin-Resource-Policy
+	}
+
+	redir /admin 404
+	route {
+		crowdsec
+		reverse_proxy vaultwarden:80 {
+			header_up X-Real-IP {header.X-Forwarded-For}
+			header_up X-Forwarded-For {header.X-Forwarded-For}
+		}
+	}
+}
+
+immich.korel.be.eu.org,
+immich.ts.korel.be.eu.org,
+immich.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	route {
+		crowdsec
+		reverse_proxy immich-server:2283
+	}
+}
+
+cockpit.ts.korel.be.eu.org,
+cockpit.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	handle /favicon.ico {
+		# Just so homepage can load the favicon...
+		header -Cross-Origin-Resource-Policy
+		reverse_proxy host.docker.internal:9090 {
+			transport http {
+				tls
+				tls_insecure_skip_verify
+			}
+		}
+	}
+
+	route {
+		crowdsec
+		reverse_proxy 172.18.0.1:9090 {
+			header_up Authorization "Basic {$COCKPIT_BASIC_AUTH}"
+			transport http {
+				tls
+				tls_insecure_skip_verify
+			}
+		}
+	}
+}
+
+portainer.ts.korel.be.eu.org,
+portainer.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+	route {
+		crowdsec
+		reverse_proxy portainer:9000
+	}
+}
+
+wud.ts.korel.be.eu.org,
+wud.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+	route {
+		crowdsec
+		reverse_proxy wud:3000
+	}
+}
+
+kopia.ts.korel.be.eu.org,
+kopia.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+	route {
+		crowdsec
+		reverse_proxy host.docker.internal:51515
+	}
+}
+
+# arr services
+
+jellyfin.ts.korel.be.eu.org,
+jellyfin.l.korel.be.eu.org {
+	log
+	route {
+		crowdsec
+		reverse_proxy host.docker.internal:8096
+		# reverse_proxy jellyfin:8096
+	}
+}
+
+prowlarr.ts.korel.be.eu.org,
+prowlarr.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy prowlarr:9696
+	}
+}
+
+rdtc.ts.korel.be.eu.org,
+rdtc.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy rdtclient:6500
+	}
+}
+
+sonarr.ts.korel.be.eu.org,
+sonarr.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy sonarr:8989
+	}
+}
+
+radarr.ts.korel.be.eu.org,
+radarr.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy radarr:7878
+	}
+}
+
+bazarr.ts.korel.be.eu.org,
+bazarr.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy bazarr:6767
+	}
+}
+
+lidarr.ts.korel.be.eu.org,
+lidarr.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy lidarr:8686
+	}
+}
+
+lazylibrarian.ts.korel.be.eu.org,
+lazylibrarian.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy lazylibrarian:5299
+	}
+}
+
+nzbget.ts.korel.be.eu.org,
+nzbget.l.korel.be.eu.org {
+	log
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy nzbget:6789
+	}
+}
+
+# end of arr services
+
+gotify.korel.be.eu.org,
+gotify.ts.korel.be.eu.org,
+gotify.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	# forward_auth authelia:9091 {
+	# 	uri /api/authz/forward-auth
+	# 	copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	# }
+
+	route {
+		crowdsec
+		reverse_proxy gotify:80
+	}
+}
+
+uptime.ts.korel.be.eu.org,
+uptime.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy uptime-kuma:3001
+	}
+}
+
+code.ts.korel.be.eu.org,
+code.l.korel.be.eu.org {
+	log
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+
+	route {
+		crowdsec
+		reverse_proxy host.docker.internal:8080
+	}
+}
+
+kk.korel.be.eu.org,
+kk.ts.korel.be.eu.org,
+kk.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+
+	route {
+		crowdsec
+		reverse_proxy karakeep:3000
+	}
+}
+
+booklore.korel.be.eu.org,
+booklore.ts.korel.be.eu.org,
+booklore.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+
+	route {
+		crowdsec
+		reverse_proxy booklore:6060
+	}
+}
+
+calibre.korel.be.eu.org,
+calibre.ts.korel.be.eu.org,
+calibre.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+
+	route {
+		crowdsec
+		reverse_proxy calibre-web:8083
+	}
+}

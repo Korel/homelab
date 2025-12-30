@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f4f8;
+            color: #334155;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 90%;
+            width: 450px;
+        }
+        h1 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .spinner {
+            border: 5px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #3b82f6;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+        .spinner.hidden { display: none; }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status-item {
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            background: #f1f5f9;
+            font-size: 0.95rem;
+        }
+        .status-item.checking { color: #d97706; background: #fef3c7; }
+        .status-item.success { color: #059669; background: #d1fae5; }
+        .status-item.failed { color: #dc2626; background: #fee2e2; }
+        .error-box {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #fef2f2;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+        }
+        .error-box.show { display: block; }
+        .manual-links {
+            margin-top: 15px;
+        }
+        .manual-links a {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .manual-links a:hover { background: #2563eb; }
+        @media (max-width: 600px) {
+            .container { padding: 25px; }
+            h1 { font-size: 1.5rem; }
+            p { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Connecting to Homelab</h1>
+        <div class="spinner" id="spinner"></div>
+        <p>Detecting the best route to your services...</p>
+        
+        <div id="status-container">
+            <div class="status-item checking" id="status-local">⏳ Checking local network...</div>
+            <div class="status-item" id="status-ts" style="display:none;"></div>
+        </div>
+        
+        <div class="error-box" id="error-box">
+            <p style="margin:0 0 15px 0;"><strong>❌ Connection Failed</strong></p>
+            <p style="margin:0 0 15px 0; font-size: 0.95rem;">
+                Unable to reach homelab via local network or Tailscale.
+            </p>
+            <div class="manual-links">
+                <a href="https://hp.l.korel.be.eu.org">Try Local</a>
+                <a href="https://hp.ts.korel.be.eu.org">Try Tailscale</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LOCAL_URL = 'https://hp.l.korel.be.eu.org';
+        const TS_URL = 'https://hp.ts.korel.be.eu.org';
+        const TIMEOUT_MS = 3000;
+
+        const statusLocal = document.getElementById('status-local');
+        const statusTs = document.getElementById('status-ts');
+        const spinner = document.getElementById('spinner');
+        const errorBox = document.getElementById('error-box');
+
+        function checkUrl(url) {
+            return new Promise((resolve) => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                    resolve(false);
+                }, TIMEOUT_MS);
+
+                fetch(url, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    cache: 'no-store',
+                    signal: controller.signal
+                })
+                .then(() => {
+                    clearTimeout(timeoutId);
+                    resolve(true);
+                })
+                .catch(() => {
+                    clearTimeout(timeoutId);
+                    resolve(false);
+                });
+            });
+        }
+
+        function redirectTo(url) {
+            const path = window.location.pathname;
+            const search = window.location.search;
+            window.location.href = url + path + search;
+        }
+
+        async function checkAndRedirect() {
+            statusLocal.textContent = '⏳ Checking local network...';
+            statusLocal.className = 'status-item checking';
+            
+            const localOk = await checkUrl(LOCAL_URL);
+            
+            if (localOk) {
+                statusLocal.textContent = '✅ Local network available!';
+                statusLocal.className = 'status-item success';
+                setTimeout(() => redirectTo(LOCAL_URL), 300);
+                return;
+            }
+
+            statusLocal.textContent = '❌ Local network not reachable';
+            statusLocal.className = 'status-item failed';
+
+            statusTs.style.display = 'block';
+            statusTs.textContent = '⏳ Checking Tailscale...';
+            statusTs.className = 'status-item checking';
+
+            const tsOk = await checkUrl(TS_URL);
+
+            if (tsOk) {
+                statusTs.textContent = '✅ Tailscale available!';
+                statusTs.className = 'status-item success';
+                setTimeout(() => redirectTo(TS_URL), 300);
+                return;
+            }
+
+            statusTs.textContent = '❌ Tailscale not reachable';
+            statusTs.className = 'status-item failed';
+            spinner.classList.add('hidden');
+            errorBox.classList.add('show');
+            document.title = 'Connection Failed';
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkAndRedirect);
+        } else {
+            checkAndRedirect();
+        }
+    </script>
+</body>
+</html>

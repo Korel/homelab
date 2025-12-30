@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: ghcr.io/immich-app/postgres:17-vectorchord0.5.3-pgvector0.8.1
+    container_name: postgres
+    # restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+    - /data/docker/volumes/postgres-data:/var/lib/postgresql/data
+
+
+  valkey:
+    image: valkey/valkey:latest
+    container_name: valkey
+    volumes:
+      - /data/docker/volumes/valkey-data:/data

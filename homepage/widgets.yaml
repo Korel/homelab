@@ -1,0 +1,12 @@
+- resources:
+    cpu: true
+    memory: true
+    disk: /
+    cputemp: true
+    uptime: true
+    network: true
+    
+
+- search:
+    provider: google
+    target: _blank

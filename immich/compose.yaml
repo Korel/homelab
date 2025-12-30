@@ -1,0 +1,26 @@
+services:
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:release
+    container_name: immich-server
+    environment:
+      - IMMICH_PORT=2283
+      - DB_USERNAME=${IMMICH_DB_USERNAME}
+      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
+      - DB_HOSTNAME=postgres
+      - REDIS_HOSTNAME=valkey
+      - IMMICH_DB_NAME=immich_db
+    volumes:
+      - /data/docker/volumes/immich-upload:/usr/src/app/upload
+    ports:
+      - 2283:2283
+    depends_on:
+      - postgres
+      - valkey
+  
+  # immich-machine-learning:
+  #   image: ghcr.io/immich-app/immich-machine-learning:release
+  #   container_name: immich-machine-learning
+  #   environment:
+  #     - IMMICH_PORT=3003
+  #   volumes:
+  #     - /data/docker/volumes/immich-machine-learning-cache:/cache

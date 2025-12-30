@@ -1,0 +1,14 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    environment:
+      - DATABASE_URL=${VAULTWARDEN_DATABASE_URL}
+      - SIGNUPS_ALLOWED=false
+      - WEBSOCKET_ENABLED=true
+      - LOG_FILE=/var/log/vaultwarden.log
+    volumes:
+      - /data/docker/volumes/vaultwarden-data:/data
+      - /data/docker/volumes/vaultwarden-log:/var/log/
+    depends_on:
+      - postgres

@@ -1,0 +1,35 @@
+sonarr:
+  tv:
+    base_url: !secret sonarr_url
+    api_key: !secret sonarr_apikey
+
+    include:
+      # series
+      - template: sonarr-quality-definition-series
+      - template: sonarr-v4-quality-profile-web-1080p
+      - template: sonarr-v4-custom-formats-web-1080p
+      - template: sonarr-v4-quality-profile-web-2160p
+      - template: sonarr-v4-custom-formats-web-2160p
+
+      # anime
+      - template: sonarr-quality-definition-anime
+      - template: sonarr-v4-quality-profile-anime
+      - template: sonarr-v4-custom-formats-anime
+
+radarr:
+  movie:
+    base_url: !secret radarr_url
+    api_key: !secret radarr_apikey
+
+    include:
+      # movie
+      - template: radarr-quality-definition-movie
+      - template: radarr-quality-profile-hd-bluray-web
+      - template: radarr-custom-formats-hd-bluray-web
+      - template: radarr-quality-profile-uhd-bluray-web
+      - template: radarr-custom-formats-uhd-bluray-web
+
+      # anime
+      - template: radarr-quality-definition-anime
+      - template: radarr-quality-profile-anime
+      - template: radarr-custom-formats-anime

@@ -1,0 +1,12 @@
+include: 
+  - authelia/compose.yaml
+  - database/compose.yaml
+  # - grocy/compose.yaml
+  - healthchecks-io-pinger/compose.yaml
+  - homepage/compose.yaml
+  - immich/compose.yaml
+  - ingress/compose.yaml
+  - karakeep/compose.yaml
+  - media/compose.yaml
+  - monitoring/compose.yaml
+  - vaultwarden/compose.yaml

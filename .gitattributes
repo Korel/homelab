@@ -1,0 +1,4 @@
+.env filter=git-crypt diff=git-crypt
+ingress/cloudflared/credentials.json filter=git-crypt diff=git-crypt
+media/recyclarr/secrets.yml filter=git-crypt diff=git-crypt
+authelia/secrets/** filter=git-crypt diff=git-crypt

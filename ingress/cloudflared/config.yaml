@@ -1,0 +1,40 @@
+tunnel: 63d120ce-9c49-49b9-a175-f564df437884
+
+ingress:
+  - hostname: korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: korel.be.eu.org
+  - hostname: vw.korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: vw.korel.be.eu.org
+  - hostname: grocy.korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: grocy.korel.be.eu.org
+  - hostname: lazylibrarian.korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: lazylibrarian.korel.be.eu.org
+  - hostname: immich.korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: immich.korel.be.eu.org
+  - hostname: auth.korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: auth.korel.be.eu.org
+  - hostname: kk.korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: kk.korel.be.eu.org
+  - hostname: gotify.korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: gotify.korel.be.eu.org
+  - hostname: calibre.korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: calibre.korel.be.eu.org
+  - service: http_status:404

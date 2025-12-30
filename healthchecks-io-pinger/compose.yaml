@@ -1,0 +1,16 @@
+services:
+  healthchecks-io-pinger:
+    image: curlimages/curl:latest
+    container_name: healthchecks-io-pinger
+    environment:
+      - HC_UUID=${HC_UUID}
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >-
+        while true; do 
+          echo "Pinging Healthchecks.io..."
+          URL="https://hc-ping.com/$HC_UUID"
+          curl -fsS --retry 3 "$$URL" && echo "Success"
+          sleep 30
+        done

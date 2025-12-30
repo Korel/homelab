@@ -1,0 +1,160 @@
+server:
+  endpoints:
+    authz:
+      forward-auth:
+        implementation: 'ForwardAuth'
+storage:
+  encryption_key: {{ secret "/secrets/storage_encryption_key" }}
+  postgres: 
+    address: 'tcp://postgres:5432'
+    username: '{{ secret "/secrets/storage_postgres_username" }}'
+    password: '{{ secret "/secrets/storage_postgres_password" }}'
+    database: 'authelia'
+    schema: 'public'
+    timeout: '5s'
+
+identity_validation:
+  reset_password:
+    jwt_secret: {{ secret "/secrets/identity_validation_reset_password_jwt_secret" }}
+
+notifier:
+  disable_startup_check: false
+  template_path: ''
+  smtp:
+    address: '{{ secret "/secrets/notifier_smtp_address" }}'
+    username: '{{ secret "/secrets/notifier_smtp_username" }}'
+    password: '{{ secret "/secrets/notifier_smtp_password" }}'
+    sender: '{{ secret "/secrets/notifier_smtp_sender" }}'
+    
+access_control:
+  default_policy: 'one_factor'
+  rules: []
+
+authentication_backend:
+  file:
+    path: '/secrets/users.yml'
+    watch: false
+    search:
+      email: false
+      case_insensitive: false
+    password:
+      algorithm: 'argon2'
+      argon2:
+        variant: 'argon2id'
+        iterations: 3
+        memory: 65536
+        parallelism: 4
+        key_length: 32
+        salt_length: 16
+      scrypt:
+        iterations: 16
+        block_size: 8
+        parallelism: 1
+        key_length: 32
+        salt_length: 16
+      pbkdf2:
+        variant: 'sha512'
+        iterations: 310000
+        salt_length: 16
+      sha2crypt:
+        variant: 'sha512'
+        iterations: 50000
+        salt_length: 16
+      bcrypt:
+        variant: 'standard'
+        cost: 12
+
+session:
+  secret: {{ secret "/secrets/session_secret" }}
+  name: 'authelia_session'
+  same_site: 'lax'
+  inactivity: '1h'
+  expiration: '24h'
+  remember_me: '1M'
+  cookies:
+    - name: 'authelia_session_ts'
+      domain: 'ts.korel.be.eu.org'
+      authelia_url: 'https://auth.ts.korel.be.eu.org'
+      default_redirection_url: 'https://ts.korel.be.eu.org'
+    - name: 'authelia_session_local'
+      domain: 'l.korel.be.eu.org'
+      authelia_url: 'https://auth.l.korel.be.eu.org'
+      default_redirection_url: 'https://l.korel.be.eu.org'
+    - name: 'authelia_session'
+      domain: 'korel.be.eu.org'
+      authelia_url: 'https://auth.korel.be.eu.org'
+      default_redirection_url: 'https://korel.be.eu.org'
+
+log:
+  level: "info"
+  format: "text"
+  keep_stdout: true
+
+identity_providers:
+  oidc:
+    hmac_secret: '{{ secret "/secrets/oidc_hmac_secret" }}'
+    jwks:
+      - key: {{ secret "/secrets/oidc_jwks_private.pem" | mindent 10 "|" | msquote }}
+    claims_policies:
+      karakeep:
+        id_token: ['email']
+      immich:
+        id_token: ['email', 'profile']
+    cors:
+      endpoints:
+        - authorization
+        - pushed-authorization-request
+        - token
+        - revocation
+        - introspection
+        - userinfo
+      allowed_origins_from_client_redirect_uris: true
+    clients:
+      - client_id: 'immich'
+        client_name: 'Immich'
+        claims_policy: 'immich'
+        client_secret: {{ secret "/secrets/oidc_clients_immich_hash" }}
+        public: false
+        authorization_policy: 'two_factor'
+        require_pkce: false
+        pkce_challenge_method: ''
+        redirect_uris:
+          - 'https://immich.korel.be.eu.org/auth/login'
+          - 'https://immich.ts.korel.be.eu.org/auth/login'
+          - 'https://immich.l.korel.be.eu.org/auth/login'
+          - 'app.immich:///oauth-callback'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'
+          - 'offline_access'
+        response_types:
+          - 'code'
+        grant_types:
+          - 'authorization_code'
+        access_token_signed_response_alg: 'none'
+        userinfo_signed_response_alg: 'none'
+        token_endpoint_auth_method: 'client_secret_basic'
+      - client_id: 'karakeep'
+        client_name: 'Karakeep'
+        claims_policy: 'karakeep'
+        client_secret: {{ secret "/secrets/oidc_clients_karakeep_hash" }}
+        public: false
+        authorization_policy: 'one_factor'
+        require_pkce: false
+        pkce_challenge_method: ''
+        redirect_uris:
+          - 'https://kk.korel.be.eu.org/api/auth/callback/custom'
+          - 'https://kk.ts.korel.be.eu.org/api/auth/callback/custom'
+          - 'https://kk.l.korel.be.eu.org/api/auth/callback/custom'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'
+        response_types:
+          - 'code'
+        grant_types:
+          - 'authorization_code'
+        access_token_signed_response_alg: 'none'
+        userinfo_signed_response_alg: 'none'
+        token_endpoint_auth_method: 'client_secret_basic'

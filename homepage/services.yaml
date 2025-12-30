@@ -1,0 +1,91 @@
+- Homelab:
+    - Immich:
+        href: https://immich.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: immich.png
+        description: Self-hosted photo and video backup solution.
+        widget:
+          type: immich
+          url: http://immich-server:2283
+          key: "{{HOMEPAGE_VAR_IMMICH_API_KEY}}"
+          version: 2
+    - Vaultwarden:
+        href: https://vw.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: https://vw.{{HOMEPAGE_VAR_DOMAIN_NAME}}/images/apple-touch-icon.png
+        description: Password manager to store and manage your passwords securely.
+    - Gotify:
+        href: https://gotify.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: https://gotify.{{HOMEPAGE_VAR_DOMAIN_NAME}}/static/favicon-32x32.png
+        description: Send push notifications to your phone or desktop.
+        widget:
+          type: gotify
+          url: http://gotify
+          key: "{{HOMEPAGE_VAR_GOTIFY_CLIENT_KEY}}"
+    - KaraKeep:
+        href: https://kk.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: karakeep.png
+        description: Self-hosted pastebin and snippet manager.
+        widget:
+          type: karakeep
+          url: http://karakeep:3000
+          key: "{{HOMEPAGE_VAR_KARAKEEP_API_KEY}}"
+    - Calibre-Web:
+        href: https://calibre.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: calibre-web.png
+        description: Web app for browsing, reading and downloading eBooks stored in a Calibre database.
+- Media:
+    - RD Torrent Client:
+        href: https://rdtc.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: rdt-client.png
+        description: Real-Debrid torrent client.
+    - NZBGet:
+        href: https://nzbget.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: nzbget.png
+        description: Usenet downloader with web interface.
+    - Prowlarr:
+        href: https://prowlarr.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: prowlarr.png
+        description: Indexer manager for Sonarr, Radarr and Lidarr.
+        widget:
+          type: prowlarr
+          url: http://prowlarr:9696
+          key: "{{HOMEPAGE_VAR_PROWLARR_API_KEY}}"
+    - Sonarr:
+        href: https://sonarr.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: sonarr.png
+        description: Smart PVR for newsgroup and bittorrent users.
+    - Radarr:
+        href: https://radarr.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: radarr.png
+        description: Movie collection manager for Usenet and BitTorrent users.
+    - Lidarr:
+        href: https://lidarr.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: lidarr.png
+        description: Music collection manager for Usenet and BitTorrent users.
+    - LazyLibrarian:
+        href: https://lazylibrarian.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: lazylibrarian.png
+        description: Ebook and audiobook manager for Usenet and BitTorrent users.
+    - Bazarr:
+        href: https://bazarr.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: bazarr.png
+        description: Companion application to Sonarr and Radarr for subtitle management.
+    - Jellyfin:
+        href: https://jellyfin.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: jellyfin.png
+        description: Free software media system for managing and streaming your media.
+- Widgets:
+    - Caddy:
+        icon: caddy.png
+        description: Open source web server with automatic HTTPS written in Go.
+        widget:
+          type: caddy
+          url: http://caddy:2019
+    - Crowdsec:
+        description: Set of security tools to protect your network and machines.
+        icon: crowdsec.png
+        href: https://app.crowdsec.net/security-engines
+        widget:
+          type: crowdsec
+          url: http://crowdsec:8080
+          username: "{{HOMEPAGE_VAR_CROWDSEC_USERNAME}}"
+          password: "{{HOMEPAGE_VAR_CROWDSEC_PASSWORD}}"

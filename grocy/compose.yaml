@@ -1,0 +1,10 @@
+services:
+  grocy:
+    image: ghcr.io/linuxserver/grocy:latest
+    container_name: grocy
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+    volumes:
+      - /data/docker/volumes/grocy-config:/config

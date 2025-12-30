@@ -1,0 +1,20 @@
+services:
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    # restart: unless-stopped
+    environment:
+      - X_AUTHELIA_CONFIG_FILTERS=template
+      - X_AUTHELIA_HEALTHCHECK=1 # Any non-empty value to enable healthcheck
+    volumes:
+      - /data/docker/volumes/authelia-config:/config
+      - ./configuration.yaml:/config/configuration.yml:ro
+      - ./secrets:/secrets:ro
+    depends_on:
+      - postgres
+    # healthcheck:
+    #   test: [ "CMD-SHELL", "/app/healthcheck.sh" ] # checks X_AUTHELIA_HEALTHCHECK first then hits /api/health endpoint
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s

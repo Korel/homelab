@@ -1,0 +1,29 @@
+services:
+  homepage:
+    container_name: homepage
+    image: ghcr.io/gethomepage/homepage:latest
+    # restart: unless-stopped
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=hp.l.korel.be.eu.org,hp.ts.korel.be.eu.org
+      - HOMEPAGE_VAR_DOMAIN_NAME=l.korel.be.eu.org
+      - HOMEPAGE_VAR_IMMICH_API_KEY=${HOMEPAGE_VAR_IMMICH_API_KEY}
+      - HOMEPAGE_VAR_KARAKEEP_API_KEY=${HOMEPAGE_VAR_KARAKEEP_API_KEY}
+      - HOMEPAGE_VAR_PROWLARR_API_KEY=${HOMEPAGE_VAR_PROWLARR_API_KEY}
+      - HOMEPAGE_VAR_CROWDSEC_USERNAME=${HOMEPAGE_VAR_CROWDSEC_USERNAME}
+      - HOMEPAGE_VAR_CROWDSEC_PASSWORD=${HOMEPAGE_VAR_CROWDSEC_PASSWORD}
+      - HOMEPAGE_VAR_GOTIFY_CLIENT_KEY=${HOMEPAGE_VAR_GOTIFY_CLIENT_KEY}
+    volumes:
+      - ./bookmarks.yaml:/app/config/bookmarks.yaml:ro
+      - ./settings.yaml:/app/config/settings.yaml:ro
+      - ./services.yaml:/app/config/services.yaml:ro
+      - ./widgets.yaml:/app/config/widgets.yaml:ro
+      - ./bg.jpg:/app/public/images/bg.jpg:ro
+      - ./custom.js:/app/config/custom.js:ro
+      - /var/run/docker.sock:/var/run/docker.sock # (optional) For docker integrations
+    # healthcheck:
+    #   test: ["CMD-SHELL", 'wget -q --spider http://127.0.0.1:3000 || exit 1']
+    #   interval: 1m30s
+    #   timeout: 30s
+    #   retries: 5
+    #   start_period: 10s
+    #   start_interval: 3s
