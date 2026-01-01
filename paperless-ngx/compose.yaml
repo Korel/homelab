@@ -1,0 +1,51 @@
+services:
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - valkey
+      - gotenberg
+      - tika
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - /data/docker/volumes/paperless-data:/usr/src/paperless/data
+      - /data/docker/volumes/paperless-media:/usr/src/paperless/media
+      - /data/docker/volumes/paperless-export:/usr/src/paperless/export
+      - /data/docker/volumes/paperless-consume:/usr/src/paperless/consume
+    environment:
+      PAPERLESS_REDIS: redis://valkey:6379
+      PAPERLESS_DBHOST: postgres
+      PAPERLESS_DBUSER: ${PAPERLESS_POSTGRES_USER}
+      PAPERLESS_DBPASS: ${PAPERLESS_POSTGRES_PASSWORD}
+      PAPERLESS_DBNAME: ${PAPERLESS_POSTGRES_DB}
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIME_ZONE: Europe/Berlin
+      PAPERLESS_OCR_LANGUAGE: deu+tur+nld+eng
+      PAPERLESS_OCR_LANGUAGES: "tur nld" # Install them
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: "https://paperless.korel.be.eu.org,https://paperless.l.korel.be.eu.org,https://paperless.ts.korel.be.eu.org"
+      PAPERLESS_ALLOWED_HOSTS: "paperless.korel.be.eu.org,paperless.l.korel.be.eu.org,paperless.ts.korel.be.eu.org"
+      PAPERLESS_CORS_ALLOWED_HOSTS: "https://paperless.korel.be.eu.org,https://paperless.l.korel.be.eu.org,https://paperless.ts.korel.be.eu.org"
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:latest
+    container_name: gotenberg
+    restart: unless-stopped
+    command:
+      - "gotenberg"
+      - "--chromium-allow-list=file:///tmp/.*"
+
+  tika:
+    image: docker.io/apache/tika:latest
+    container_name: tika
+    restart: unless-stopped

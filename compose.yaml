@@ -1,4 +1,4 @@
-include: 
+include:
   - authelia/compose.yaml
   - database/compose.yaml
   # - grocy/compose.yaml
@@ -9,4 +9,5 @@ include:
   - karakeep/compose.yaml
   - media/compose.yaml
   - monitoring/compose.yaml
+  - paperless-ngx/compose.yaml
   - vaultwarden/compose.yaml

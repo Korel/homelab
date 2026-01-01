@@ -421,3 +421,15 @@ calibre.l.korel.be.eu.org {
 		reverse_proxy calibre-web:8083
 	}
 }
+
+paperless.l.korel.be.eu.org,
+paperless.ts.korel.be.eu.org {
+  log
+  encode zstd gzip
+
+  route {
+    crowdsec
+    reverse_proxy paperless:8000
+  }
+}
+
