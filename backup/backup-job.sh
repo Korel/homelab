@@ -124,7 +124,7 @@ if [ -f /tmp/backup-hdd.log ]; then
     cat /tmp/backup-hdd.log
 fi
 if [ -f /tmp/backup-idrive.log ]; then
-    cat $(strings /tmp/backup-idrive.log)
+    strings /tmp/backup-idrive.log # Use strings because idrive logs are weird, turns the file to binary file
 fi
 
 # --- Phase 3: Cleanup ---
