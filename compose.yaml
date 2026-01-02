@@ -9,5 +9,6 @@ include:
   - karakeep/compose.yaml
   - media/compose.yaml
   - monitoring/compose.yaml
+  # - ollama/compose.yaml # Decided to deploy to oracle-vm
   - paperless-ngx/compose.yaml
   - vaultwarden/compose.yaml

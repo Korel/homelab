@@ -433,3 +433,13 @@ paperless.ts.korel.be.eu.org {
   }
 }
 
+paperless-ai.l.korel.be.eu.org,
+paperless-ai.ts.korel.be.eu.org {
+  log
+  encode zstd gzip
+
+  route {
+    crowdsec
+    reverse_proxy paperless-ai:3000
+  }
+}
