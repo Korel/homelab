@@ -13,6 +13,8 @@ DOCKER_COMPOSE_DIR="/home/korel/projects/homelab"
 DOCKER_COMPOSE_FILE="$DOCKER_COMPOSE_DIR/compose.yaml"
 BTRFS_SOURCE="/data/docker"
 GOTIFY_TOKEN_FILE="/root/backup-job-gotify-token.txt"
+HDD_LOG="/var/log/backup-job-hdd.log"
+IDRIVE_LOG="/var/log/backup-job-idrive.log"
 
 # Log helper functions
 gotify(){
@@ -48,11 +50,6 @@ log_fatal() {
   exit 1
 }
 
-# Cleanup temporary logs on exit
-cleanup_logs() {
-    rm -f /tmp/backup-hdd.log /tmp/backup-idrive.log
-}
-trap cleanup_logs EXIT
 
 # --- Initialization ---
 log_info "Starting backup job (Staging Mode)..."
@@ -100,7 +97,7 @@ log_info "Starting parallel backup tasks..."
     else
         log_warn "HDD not mounted at $MOUNTED_DRIVE. Skipping local backup."
     fi
-) > /tmp/backup-hdd.log 2>&1 &
+) >> "$HDD_LOG" 2>&1 &
 PID_HDD=$!
 
 # Task B: Push to IDrive
@@ -112,20 +109,13 @@ PID_HDD=$!
     else
         log_warn "IDrive binary not found. Skipping cloud backup."
     fi
-) > /tmp/backup-idrive.log 2>&1 &
+) 2>&1 | strings >> "$IDRIVE_LOG" &
 PID_IDRIVE=$!
 
 # Wait for both
 wait $PID_HDD
 wait $PID_IDRIVE
 
-# Print captured logs in order
-if [ -f /tmp/backup-hdd.log ]; then
-    cat /tmp/backup-hdd.log
-fi
-if [ -f /tmp/backup-idrive.log ]; then
-    strings /tmp/backup-idrive.log # Use strings because idrive logs are weird, turns the file to binary file
-fi
 
 # --- Phase 3: Cleanup ---
 
