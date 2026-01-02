@@ -33,9 +33,9 @@ services:
       PAPERLESS_TIME_ZONE: Europe/Berlin
       PAPERLESS_OCR_LANGUAGE: deu+tur+nld+eng
       PAPERLESS_OCR_LANGUAGES: "tur nld" # Install them
-      PAPERLESS_CSRF_TRUSTED_ORIGINS: "https://paperless.korel.be.eu.org,https://paperless.l.korel.be.eu.org,https://paperless.ts.korel.be.eu.org"
-      PAPERLESS_ALLOWED_HOSTS: "paperless.korel.be.eu.org,paperless.l.korel.be.eu.org,paperless.ts.korel.be.eu.org"
-      PAPERLESS_CORS_ALLOWED_HOSTS: "https://paperless.korel.be.eu.org,https://paperless.l.korel.be.eu.org,https://paperless.ts.korel.be.eu.org"
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: "https://paperless.korel.be.eu.org,https://paperless.l.korel.be.eu.org,https://paperless.ts.korel.be.eu.org,http://paperless"
+      PAPERLESS_ALLOWED_HOSTS: "paperless.korel.be.eu.org,paperless.l.korel.be.eu.org,paperless.ts.korel.be.eu.org,paperless"
+      PAPERLESS_CORS_ALLOWED_HOSTS: "https://paperless.korel.be.eu.org,https://paperless.l.korel.be.eu.org,https://paperless.ts.korel.be.eu.org,http://paperless"
 
   gotenberg:
     image: docker.io/gotenberg/gotenberg:latest
