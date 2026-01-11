@@ -5,16 +5,25 @@ set -euo pipefail
 
 # Configuration
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-STAGING_DIR="/data/.backup"
-SNAPSHOT_PATH="$STAGING_DIR/docker-volumes"
-MOUNTED_DRIVE="/mnt/samsung-hdd"
-BACKUP_DIR="$MOUNTED_DRIVE/homelab-backup"
-DOCKER_COMPOSE_DIR="/home/korel/projects/homelab"
+STAGING_DIR=${STAGING_DIR:-"/data/.backup"}
+SNAPSHOT_DIR=${SNAPSHOT_DIR:-"$STAGING_DIR/snapshots"}
+HDD_MOUNTED_DRIVE=${HDD_MOUNTED_DRIVE:-"/mnt/samsung-hdd"}
+HDD_BACKUP_DIR=${HDD_BACKUP_DIR:-"$HDD_MOUNTED_DRIVE/homelab-backup"}
+DOCKER_COMPOSE_DIR=${DOCKER_COMPOSE_DIR:-"/home/korel/projects/homelab"}
 DOCKER_COMPOSE_FILE="$DOCKER_COMPOSE_DIR/compose.yaml"
-BTRFS_SOURCE="/data/docker"
-GOTIFY_TOKEN_FILE="/root/backup-job-gotify-token.txt"
-HDD_LOG="/var/log/backup-job-hdd.log"
-IDRIVE_LOG="/var/log/backup-job-idrive.log"
+GOTIFY_TOKEN_FILE=${GOTIFY_TOKEN_FILE:-"/root/backup-job-gotify-token.txt"}
+LOG_DIR=${LOG_DIR:-"/var/log"}
+BACKUP_JOB_LOG=${BACKUP_JOB_LOG:-"$LOG_DIR/backup-job.log"}
+HDD_LOG=${HDD_LOG:-"$LOG_DIR/backup-job-hdd.log"}
+IDRIVE_LOG=${IDRIVE_LOG:-"$LOG_DIR/backup-job-idrive.log"}
+BTRFS_SNAPSHOT_DIRS=(
+    "/data/docker"
+    "/data/personal"
+)
+
+log_info() {
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $1"
+}
 
 # Log helper functions
 gotify(){
@@ -28,11 +37,7 @@ gotify(){
     curl -s --max-time 1 -X POST "$gotify_url" \
         -F "title=$title" \
         -F "message=$message" \
-        -F "priority=$priority" > /dev/null || true
-}
-
-log_info() {
-  echo "[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $1"
+        -F "priority=$priority" > /dev/null || echo "ERROR: Gotify notification failed to send." >&2 # Using echo to avoid recursion
 }
 
 log_warn() {
@@ -50,17 +55,26 @@ log_fatal() {
   exit 1
 }
 
-
 # --- Initialization ---
+
+# Check if log file can be created/written into
+if { true >> "$BACKUP_JOB_LOG"; }; then    
+    # Setup logging of this script to BACKUP_JOB_LOG
+    log_info "The logs for this backup job will be stored in: $BACKUP_JOB_LOG"
+    exec >> "$BACKUP_JOB_LOG" 2>&1
+else
+    log_warn "Cannot write to log file $BACKUP_JOB_LOG. Logging to stdout."
+fi
+
 log_info "Starting backup job (Staging Mode)..."
 
 # Load Gotify Token
 if [ -f "$GOTIFY_TOKEN_FILE" ]; then
-    export GOTIFY_TOKEN=$(cat "$GOTIFY_TOKEN_FILE")
+    GOTIFY_TOKEN=$(cat "$GOTIFY_TOKEN_FILE") || log_warn "Could not read Gotify token from $GOTIFY_TOKEN_FILE. Notifications disabled."
 else
     log_warn "Gotify token not found at $GOTIFY_TOKEN_FILE. Notifications disabled."
-    export GOTIFY_TOKEN=""
 fi
+export GOTIFY_TOKEN=${GOTIFY_TOKEN:-""}
 
 # Ensure staging environment is ready
 if [ ! -d "$STAGING_DIR" ]; then
@@ -69,19 +83,34 @@ fi
 mkdir -p "$STAGING_DIR/postgres"
 
 # Cleanup any stale snapshots
-if [ -e "$SNAPSHOT_PATH" ]; then
-    log_info "Cleaning up stale snapshot..."
-    btrfs subvolume delete "$SNAPSHOT_PATH" || log_warn "Failed to delete stale snapshot"
-fi
+log_info "Cleaning up any stale Btrfs snapshots in staging..."
+for SOURCE in "${BTRFS_SNAPSHOT_DIRS[@]}"; do
+    SNAPSHOT_NAME=$(basename "$SOURCE")
+    SNAPSHOT_PATH="$STAGING_DIR/$SNAPSHOT_NAME"
+    if [ -d "$SNAPSHOT_PATH" ]; then
+        log_info "Cleaning up stale snapshot $SNAPSHOT_PATH..."
+        btrfs subvolume delete "$SNAPSHOT_PATH" || log_fatal "Failed to delete stale snapshot $SNAPSHOT_PATH"
+    fi
+done
 
 # --- Phase 1: Staging ---
 
-log_info "Creating read-only snapshot of $BTRFS_SOURCE..."
-btrfs subvolume snapshot -r "$BTRFS_SOURCE" "$SNAPSHOT_PATH" || log_fatal "Btrfs snapshot failed."
+log_info "Creating Btrfs snapshots for '${BTRFS_SNAPSHOT_DIRS[*]}' staging..."
+for SOURCE in "${BTRFS_SNAPSHOT_DIRS[@]}"; do
+    SNAPSHOT_NAME=$(basename "$SOURCE")
+    SNAPSHOT_PATH="$STAGING_DIR/$SNAPSHOT_NAME"
+    log_info "Creating read-only snapshot of $SOURCE..."
+    btrfs subvolume snapshot -r "$SOURCE" "$SNAPSHOT_PATH" || log_fatal "Btrfs snapshot failed for $SOURCE."
+done
 
 log_info "Creating PostgreSQL dump to staging..."
 POSTGRES_DUMP_FILE="$STAGING_DIR/postgres/pg-dumpall-$TIMESTAMP.sql.gz"
-docker compose -f "$DOCKER_COMPOSE_FILE" exec -T postgres pg_dumpall -U postgres --clean --if-exists | gzip > "$POSTGRES_DUMP_FILE" || log_err "PostgreSQL dump failed."
+if docker compose -f "$DOCKER_COMPOSE_FILE" exec -T postgres pg_dumpall -U postgres --clean --if-exists | gzip > "$POSTGRES_DUMP_FILE"; then 
+    find "$STAGING_DIR/postgres" -type f -name "*.sql.gz" -mtime +3 -exec rm {} \; # Cleanup dumps older than 3 days
+    log_info "PostgreSQL dump created at $POSTGRES_DUMP_FILE."
+else
+    log_err "PostgreSQL dump failed."
+fi
 
 # --- Phase 2: Parallel Backup ---
 
@@ -89,13 +118,17 @@ log_info "Starting parallel backup tasks..."
 
 # Task A: Sync to HDD
 (
-    if mountpoint -q "$MOUNTED_DRIVE"; then
+    if mountpoint -q "$HDD_MOUNTED_DRIVE"; then
         log_info "--- HDD Sync Started ---"
-        mkdir -p "$BACKUP_DIR"
-        rsync -av --delete "$STAGING_DIR/" "$BACKUP_DIR/" || log_err "HDD sync failed."
-        log_info "--- HDD Sync Completed ---"
+        mkdir -p "$HDD_BACKUP_DIR"
+        if rsync -av --delete "$STAGING_DIR/" "$HDD_BACKUP_DIR/"; then
+            log_info "--- HDD Sync Completed ---"
+        else
+            log_err "HDD sync failed!"
+        fi
+        
     else
-        log_warn "HDD not mounted at $MOUNTED_DRIVE. Skipping local backup."
+        log_warn "HDD not mounted at $HDD_MOUNTED_DRIVE. Skipping local backup."
     fi
 ) >> "$HDD_LOG" 2>&1 &
 PID_HDD=$!
@@ -104,10 +137,13 @@ PID_HDD=$!
 (
     if command -v /opt/IDriveForLinux/bin/idrive &> /dev/null; then
         log_info "--- IDrive Push Started ---"
-        /opt/IDriveForLinux/bin/idrive -b --silent || log_err "IDrive backup failed."
-        log_info "--- IDrive Push Completed ---"
+        if /opt/IDriveForLinux/bin/idrive -b --silent; then
+            log_info "--- IDrive Push Completed ---"
+        else
+            log_err "IDrive backup failed!"
+        fi
     else
-        log_warn "IDrive binary not found. Skipping cloud backup."
+        log_err "IDrive binary not found. Skipping cloud backup."
     fi
 ) 2>&1 | strings >> "$IDRIVE_LOG" &
 PID_IDRIVE=$!
@@ -120,12 +156,13 @@ wait $PID_IDRIVE
 # --- Phase 3: Cleanup ---
 
 log_info "Cleaning up staging environment..."
-if [ -e "$SNAPSHOT_PATH" ]; then
-    btrfs subvolume delete "$SNAPSHOT_PATH" || log_err "Failed to delete snapshot $SNAPSHOT_PATH"
-fi
-
-# Keep only 3 days of dumps in staging
-find "$STAGING_DIR/postgres" -type f -name "*.sql.gz" -mtime +3 -exec rm {} \;
+for SOURCE in "${BTRFS_SNAPSHOT_DIRS[@]}"; do
+    SNAPSHOT_NAME=$(basename "$SOURCE")
+    SNAPSHOT_PATH="$SNAPSHOT_DIR/$SNAPSHOT_NAME"
+    if [ -d "$SNAPSHOT_PATH" ]; then
+        btrfs subvolume delete "$SNAPSHOT_PATH" || log_err "Failed to delete snapshot $SNAPSHOT_PATH"
+    fi
+done
 
 log_info "Backup job completed successfully."
 gotify "Homelab backup successfully staged and synced." "Backup Success" 5
