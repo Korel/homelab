@@ -63,6 +63,7 @@ services:
       - ./crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
       - /data/docker/volumes/caddy-data:/var/log/caddy:ro
       - /data/docker/volumes/vaultwarden-log:/var/log/vaultwarden:ro
+      - /data/docker/volumes/authelia-log:/var/log/authelia:ro
     # restart: unless-stopped
     security_opt:
       - no-new-privileges=true

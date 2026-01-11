@@ -8,3 +8,8 @@ filenames:
 labels:
   type: vaultwarden
 ---
+filenames:
+  - /var/log/authelia/authelia.log
+labels:
+  type: authelia
+---

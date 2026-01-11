@@ -81,12 +81,13 @@ if [ ! -d "$STAGING_DIR" ]; then
     mkdir -p "$STAGING_DIR" || log_fatal "Could not create staging directory $STAGING_DIR"
 fi
 mkdir -p "$STAGING_DIR/postgres"
+mkdir -p "$SNAPSHOT_DIR"
 
 # Cleanup any stale snapshots
 log_info "Cleaning up any stale Btrfs snapshots in staging..."
 for SOURCE in "${BTRFS_SNAPSHOT_DIRS[@]}"; do
     SNAPSHOT_NAME=$(basename "$SOURCE")
-    SNAPSHOT_PATH="$STAGING_DIR/$SNAPSHOT_NAME"
+    SNAPSHOT_PATH="$SNAPSHOT_DIR/$SNAPSHOT_NAME"
     if [ -d "$SNAPSHOT_PATH" ]; then
         log_info "Cleaning up stale snapshot $SNAPSHOT_PATH..."
         btrfs subvolume delete "$SNAPSHOT_PATH" || log_fatal "Failed to delete stale snapshot $SNAPSHOT_PATH"
@@ -98,7 +99,7 @@ done
 log_info "Creating Btrfs snapshots for '${BTRFS_SNAPSHOT_DIRS[*]}' staging..."
 for SOURCE in "${BTRFS_SNAPSHOT_DIRS[@]}"; do
     SNAPSHOT_NAME=$(basename "$SOURCE")
-    SNAPSHOT_PATH="$STAGING_DIR/$SNAPSHOT_NAME"
+    SNAPSHOT_PATH="$SNAPSHOT_DIR/$SNAPSHOT_NAME"
     log_info "Creating read-only snapshot of $SOURCE..."
     btrfs subvolume snapshot -r "$SOURCE" "$SNAPSHOT_PATH" || log_fatal "Btrfs snapshot failed for $SOURCE."
 done

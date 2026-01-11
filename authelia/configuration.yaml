@@ -88,6 +88,7 @@ session:
 log:
   level: "info"
   format: "text"
+  file_path: "/var/log/authelia.log"
   keep_stdout: true
 
 identity_providers:

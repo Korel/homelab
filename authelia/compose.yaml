@@ -8,6 +8,7 @@ services:
       - X_AUTHELIA_HEALTHCHECK=1 # Any non-empty value to enable healthcheck
     volumes:
       - /data/docker/volumes/authelia-config:/config
+      - /data/docker/volumes/authelia-log:/var/log
       - ./configuration.yaml:/config/configuration.yml:ro
       - ./secrets:/secrets:ro
     depends_on:
