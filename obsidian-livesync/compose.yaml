@@ -1,7 +1,7 @@
 services:
   obsidian-livesync:
     image: couchdb:latest
-    container_name: obsidian-livesync
+    container_name: obsidian-livesync-couchdb
     restart: unless-stopped
     # ports:
       # - "5984:5984"
@@ -9,10 +9,5 @@ services:
       - COUCHDB_USER=${OBSIDIAN_COUCHDB_USER}
       - COUCHDB_PASSWORD=${OBSIDIAN_COUCHDB_PASSWORD}
     volumes:
-      - /data/docker/volumes/obsidian-livesync:/opt/couchdb/data
-      - ./local.ini:/opt/couchdb/etc/local.ini
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:5984/_up"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5
+      - /data/docker/volumes/obsidian-livesync-data:/opt/couchdb/data
+      - /data/docker-volumes/obsidian-livesync-etc:/opt/couchdb/etc/local.d

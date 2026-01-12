@@ -450,15 +450,6 @@ obsidian-livesync.ts.korel.be.eu.org {
 	log
 	encode zstd gzip
 
-	header {
-		Access-Control-Allow-Origin "app://obsidian.md"
-		Access-Control-Allow-Methods "GET, PUT, POST, HEAD, DELETE"
-		Access-Control-Allow-Headers "accept, authorization, content-type, origin, referer"
-		Access-Control-Max-Age "3600"
-		Access-Control-Allow-Credentials "true"
-		Vary "Origin"
-	}
-
 	route {
 		crowdsec
 		reverse_proxy obsidian-livesync:5984

@@ -37,4 +37,8 @@ ingress:
     service: https://caddy
     originRequest:
       originServerName: calibre.korel.be.eu.org
+  - hostname: obsidian-livesync.korel.be.eu.org
+    service: https://caddy
+    originRequest:
+      originServerName: obsidian-livesync.korel.be.eu.org
   - service: http_status:404
