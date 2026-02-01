@@ -95,6 +95,7 @@ services:
       - TZ=Europe/Berlin
     volumes:
       - /data/docker/volumes/prowlarr-config:/config
+      - ./prowlarr/Custom:/config/Definitions/Custom
       - /data/library:/library
   radarr:
     image: linuxserver/radarr:latest
