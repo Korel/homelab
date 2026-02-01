@@ -280,21 +280,6 @@ radarr.l.korel.be.eu.org {
 	}
 }
 
-bazarr.ts.korel.be.eu.org,
-bazarr.l.korel.be.eu.org {
-	log
-	encode zstd gzip
-	forward_auth authelia:9091 {
-		uri /api/authz/forward-auth
-		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-	}
-
-	route {
-		crowdsec
-		reverse_proxy bazarr:6767
-	}
-}
-
 lidarr.ts.korel.be.eu.org,
 lidarr.l.korel.be.eu.org {
 	log

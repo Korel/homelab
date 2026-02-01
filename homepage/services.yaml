@@ -65,10 +65,6 @@
         href: https://lazylibrarian.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
         icon: lazylibrarian.png
         description: Ebook and audiobook manager for Usenet and BitTorrent users.
-    - Bazarr:
-        href: https://bazarr.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
-        icon: bazarr.png
-        description: Companion application to Sonarr and Radarr for subtitle management.
     - Jellyfin:
         href: https://jellyfin.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
         icon: jellyfin.png
