@@ -11,8 +11,7 @@ services:
       - IMMICH_DB_NAME=immich_db
     volumes:
       - /data/docker/volumes/immich-upload:/usr/src/app/upload
-    ports:
-      - 2283:2283
+      - /dev/dri:/dev/dri # Quicksync / VAAPI
     depends_on:
       - postgres
       - valkey
