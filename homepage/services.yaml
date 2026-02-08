@@ -32,6 +32,15 @@
         href: https://calibre.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
         icon: calibre-web.png
         description: Web app for browsing, reading and downloading eBooks stored in a Calibre database.
+    - Paperless-ngx:
+        href: https://paperless.{{HOMEPAGE_VAR_DOMAIN_NAME}}/
+        icon: paperless-ngx.png
+        description: Open-source document management system that transforms your physical documents into a searchable online archive so you can keep, well, less paper.
+        widget:
+          type: paperlessngx
+          url: http://paperless:8000
+          username: "{{HOMEPAGE_VAR_PAPERLESS_USERNAME}}"
+          password: "{{HOMEPAGE_VAR_PAPERLESS_PASSWORD}}"
 - Media:
     - RD Torrent Client:
         href: https://rdtc.{{HOMEPAGE_VAR_DOMAIN_NAME}}/

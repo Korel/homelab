@@ -8,8 +8,8 @@ services:
       - valkey
       - gotenberg
       - tika
-    ports:
-      - "8000:8000"
+    # ports:
+      # - "8000:8000"
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8000/"]
       interval: 30s
