@@ -1,4 +1,5 @@
 include:
+  - atuin/compose.yaml
   - authelia/compose.yaml
   - database/compose.yaml
   # - grocy/compose.yaml
@@ -13,3 +14,4 @@ include:
   # - ollama/compose.yaml # Decided to deploy to oracle-vm
   - paperless-ngx/compose.yaml
   - vaultwarden/compose.yaml
+

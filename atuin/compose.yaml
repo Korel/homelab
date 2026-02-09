@@ -2,7 +2,7 @@ services:
   atuin:
     restart: unless-stopped
     image: ghcr.io/atuinsh/atuin:latest
-    command: server start
+    command: "start"
     volumes:
       - "/data/docker/volumes/atuin-config:/config"
     ports:
