@@ -409,24 +409,22 @@ calibre.l.korel.be.eu.org {
 
 paperless.l.korel.be.eu.org,
 paperless.ts.korel.be.eu.org {
-  log
-  encode zstd gzip
-
-  route {
-    crowdsec
-    reverse_proxy paperless:8000
-  }
+	log
+	encode zstd gzip
+	route {
+		crowdsec
+		reverse_proxy paperless:8000
+	}
 }
 
 paperless-ai.l.korel.be.eu.org,
 paperless-ai.ts.korel.be.eu.org {
-  log
-  encode zstd gzip
-
-  route {
-    crowdsec
-    reverse_proxy paperless-ai:3000
-  }
+	log
+	encode zstd gzip
+	route {
+		crowdsec
+		reverse_proxy paperless-ai:3000
+	}
 }
 
 obsidian-livesync.korel.be.eu.org,
@@ -438,5 +436,16 @@ obsidian-livesync.ts.korel.be.eu.org {
 	route {
 		crowdsec
 		reverse_proxy obsidian-livesync:5984
+	}
+}
+
+atuin.korel.be.eu.org,
+atuin.ts.korel.be.eu.org,
+atuin.l.korel.be.eu.org {
+	log
+	encode zstd gzip
+	route {
+		crowdsec
+		reverse_proxy atuin:8888
 	}
 }

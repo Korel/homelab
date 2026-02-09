@@ -1,0 +1,16 @@
+services:
+  atuin:
+    restart: unless-stopped
+    image: ghcr.io/atuinsh/atuin:latest
+    command: server start
+    volumes:
+      - "/data/docker/volumes/atuin-config:/config"
+    ports:
+      - 8888:8888
+    environment:
+      ATUIN_HOST: "0.0.0.0"
+      ATUIN_OPEN_REGISTRATION: "true"
+      ATUIN_DB_URI: postgres://${ATUIN_DB_USERNAME}:${ATUIN_DB_PASSWORD}@postgres/${ATUIN_DB_NAME}
+      RUST_LOG: info,atuin_server=debug
+    depends_on:
+      - postgres
