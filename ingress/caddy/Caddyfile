@@ -21,6 +21,10 @@ http://localhost {
 	respond /healthcheck 200
 }
 
+*.korel.be.eu.org {
+	respond 404
+}
+
 auth.korel.be.eu.org,
 auth.l.korel.be.eu.org,
 auth.ts.korel.be.eu.org {
