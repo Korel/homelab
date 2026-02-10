@@ -383,18 +383,6 @@ kk.l.korel.be.eu.org {
 	}
 }
 
-booklore.korel.be.eu.org,
-booklore.ts.korel.be.eu.org,
-booklore.l.korel.be.eu.org {
-	log
-	encode zstd gzip
-
-	route {
-		crowdsec
-		reverse_proxy booklore:6060
-	}
-}
-
 calibre.korel.be.eu.org,
 calibre.ts.korel.be.eu.org,
 calibre.l.korel.be.eu.org {
