@@ -14,6 +14,13 @@
 	admin :2019
 	servers {
 		trusted_proxies static 172.0.0.0/8
+    listener_wrappers {
+      proxy_protocol {
+        timeout 5s
+        allow 100.73.160.63/32  # Your nginx tunnel VM Tailscale IP
+      }
+      tls
+    }
 	}
 }
 
@@ -71,20 +78,6 @@ hp.ts.korel.be.eu.org {
 			crowdsec
 			reverse_proxy homepage:3000
 		}
-	}
-}
-
-st.ts.korel.be.eu.org,
-st.l.korel.be.eu.org {
-	log
-
-	forward_auth authelia:9091 {
-		uri /api/authz/forward-auth
-		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-	}
-
-	reverse_proxy syncthing:8384 {
-		header_up Host {upstream_hostport}
 	}
 }
 
