@@ -62,7 +62,7 @@ ls /usr/lib/nginx/modules/ | grep -E "stream|geoip"
 sudo rm /etc/nginx/sites-enabled/default
 ```
 
-### Configure TCP stream proxy with geo-blocking
+### Configure TCP stream proxy with geo-blocking and IP whitelisting
 
 Edit `/etc/nginx/modules-enabled/stream.conf`:
 
@@ -72,32 +72,34 @@ stream {
         $geo_country_code country iso_code;
     }
 
-    map $geo_country_code $backend {
-        default "127.0.0.1:4443";
-        DE <TAILSCALE_IP>:443;
-        # Add more countries:
-        # TR <TAILSCALE_IP>:443;
-        # NL <TAILSCALE_IP>:443;
-        # GB <TAILSCALE_IP>:443;
-        # BE <TAILSCALE_IP>:443;
+    # IP whitelist — these IPs/CIDRs route to homelab regardless of geo
+    # (nginx "geo" is just an IP-to-value lookup with CIDR support, not related to geography)
+    geo $is_whitelisted {
+        default 0;
+        # Add whitelisted IPs or CIDRs here, e.g.:
+        # 1.2.3.4    1;
+        # 10.0.0.0/8 1;
     }
 
-    map $geo_country_code $backend_http {
+    map "$is_whitelisted:$geo_country_code" $backend {
+        default "127.0.0.1:4443";
+        ~^1:    <TAILSCALE_IP>:443;
+        "0:DE"  <TAILSCALE_IP>:443;
+        # "0:BE" <TAILSCALE_IP>:443;
+    }
+
+    map "$is_whitelisted:$geo_country_code" $backend_http {
         default "127.0.0.1:8404";
-        DE <TAILSCALE_IP>:80;
-        # TR <TAILSCALE_IP>:80;
-        # NL <TAILSCALE_IP>:80;
-        # GB <TAILSCALE_IP>:80;
-        # BE <TAILSCALE_IP>:80;
+        ~^1:    <TAILSCALE_IP>:80;
+        "0:DE"  <TAILSCALE_IP>:80;
+        # "0:BE" <TAILSCALE_IP>:80;
     }
 
-    map $geo_country_code $backend_udp {
+    map "$is_whitelisted:$geo_country_code" $backend_udp {
         default "127.0.0.1:4443";
-        DE <TAILSCALE_IP>:443;
-        # TR <TAILSCALE_IP>:443;
-        # NL <TAILSCALE_IP>:443;
-        # GB <TAILSCALE_IP>:443;
-        # BE <TAILSCALE_IP>:443;
+        ~^1:    <TAILSCALE_IP>:443;
+        "0:DE"  <TAILSCALE_IP>:443;
+        # "0:BE" <TAILSCALE_IP>:443;
     }
 
     # HTTPS
@@ -259,14 +261,36 @@ Keep local and Tailscale records for direct access:
 
 ## Adding a New Country
 
-Edit `/etc/nginx/modules-enabled/stream.conf` and add the country code to **all three maps** (`$backend`, `$backend_http`, `$backend_udp`):
+Edit `/etc/nginx/modules-enabled/stream.conf` and add the country code to **all three maps** (`$backend`, `$backend_http`, `$backend_udp`). Country entries use the `"0:XX"` format (the `0:` prefix means "not whitelisted, check geo"):
 
 ```nginx
-TR <TAILSCALE_IP>:443;   # Turkey
-NL <TAILSCALE_IP>:443;   # Netherlands
-GB <TAILSCALE_IP>:443;   # United Kingdom
-BE <TAILSCALE_IP>:443;   # Belgium
+"0:TR" <TAILSCALE_IP>:443;   # Turkey
+"0:NL" <TAILSCALE_IP>:443;   # Netherlands
+"0:GB" <TAILSCALE_IP>:443;   # United Kingdom
+"0:BE" <TAILSCALE_IP>:443;   # Belgium
 ```
+
+Then reload:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+---
+
+## Whitelisting an IP
+
+Whitelisted IPs and CIDRs are routed to the homelab **regardless of their country**. Add entries to the `$is_whitelisted` geo block (despite the name, nginx's `geo` directive is just an IP-to-value lookup with CIDR support — it has nothing to do with geography):
+
+```nginx
+geo $is_whitelisted {
+    default 0;
+    1.2.3.4    1;        # single IP
+    10.0.0.0/8 1;        # entire CIDR range
+}
+```
+
+The `~^1:` entries in the backend maps match any whitelisted IP, bypassing the geo check. No changes needed to the backend maps themselves.
 
 Then reload:
 
@@ -280,9 +304,9 @@ sudo nginx -t && sudo systemctl reload nginx
 |------|----------------|
 | DE   | Germany        |
 | TR   | Turkey         |
+| BE   | Belgium        |
 | NL   | Netherlands    |
 | GB   | United Kingdom |
-| BE   | Belgium        |
 | AT   | Austria        |
 | FR   | France         |
 | CH   | Switzerland    |
